@@ -1,23 +1,23 @@
 import React from 'react';
 import { StatusBar } from 'react-native';
-import { useNavigation } from '@react-navigation/native'
+import { getStatusBarHeight } from 'react-native-iphone-x-helper';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { useAnimatedScrollHandler, useSharedValue, useAnimatedStyle, interpolate, Extrapolate } from 'react-native-reanimated';
 
-import { Acessory } from '../../components/Acessory';
+import { Accessory } from '../../components/Accessory';
 import { BackButton } from '../../components/BackButton';
 import { ImageSlider } from '../../components/ImageSlider';
+import { Button } from '../../components/Button';
+import { CarDTO } from '../../dtos/CarDTO';
 
-import SpeedSvg from '../../assets/speed.svg'
-import AccelerationSvg from '../../assets/acceleration.svg'
-import ForceSvg from '../../assets/force.svg'
-import GasolineSvg from '../../assets/gasoline.svg'
-import ExChangeSvg from '../../assets/exchange.svg'
-import PeopleSvg from '../../assets/people.svg'
+import { getAccessoryIcon } from '../../utils/getAccessoryIcons'
 
 import {
    Container,
+   AnimatedHeader,
    Header,
-   CarImages,
-   Content,
+   AnimatedCarImages,
+   AnimatedContent,
    Details,
    Description,
    Brand,
@@ -26,16 +26,49 @@ import {
    Period,
    Price,
    About,
-   Acessories,
+   Accessories,
    Footer
 } from './styles';
-import { Button } from '../../components/Button';
+
+interface Params {
+   car: CarDTO
+}
 
 export const CarDetails = () => {
    const navigation = useNavigation()
+   const route = useRoute();
+   const { car } = route.params as Params;
+   const statusBarHeight = getStatusBarHeight();
+
+   const scrollY = useSharedValue(0);
+   const scrollHandler = useAnimatedScrollHandler(event => {
+      scrollY.value = event.contentOffset.y;
+   });
+
+   const headerStyleAnimation = useAnimatedStyle(() => {
+      return {
+         height: interpolate(
+            scrollY.value,
+            [0, 200],
+            [200, statusBarHeight + 50],
+            Extrapolate.CLAMP
+         )
+      }
+   })
+
+   const sliderCarsStyleAnimation = useAnimatedStyle(() => {
+      return {
+         opacity: interpolate(
+            scrollY.value,
+            [0, 150],
+            [1, 0],
+            Extrapolate.CLAMP
+         )
+      }
+   })
 
    const handleScheduling = () => {
-      navigation.navigate('Scheduling')
+      navigation.navigate('Scheduling', { car })
    }
 
    const handleHome = () => {
@@ -49,45 +82,51 @@ export const CarDetails = () => {
             backgroundColor="transparent"
             translucent
          />
-         <Header>
-            <BackButton
-               onPress={handleHome}
-            />
-         </Header>
+         <AnimatedHeader style={headerStyleAnimation}>
+            <Header>
+               <BackButton
+                  onPress={handleHome}
+               />
+            </Header>
+            <AnimatedCarImages style={sliderCarsStyleAnimation}>
+               <ImageSlider
+                  imagesUrl={car.photos}
+               />
+            </AnimatedCarImages>
+         </AnimatedHeader>
 
-         <CarImages>
-            <ImageSlider
-               imagesUrl={['https://production.autoforce.com/uploads/version/profile_image/5051/model_middle_comprar-tiptronic_23c24c9941.png']}
-            />
-         </CarImages>
-
-         <Content>
+         <AnimatedContent 
+            onScroll={scrollHandler}
+            scrollEventThrottle={16}
+         >
             <Details>
                <Description>
-                  <Brand>Lamborghini</Brand>
-                  <Name>Huracan</Name>
+                  <Brand>{car.brand}</Brand>
+                  <Name>{car.name}</Name>
                </Description>
                <Rent>
-                  <Period>Ao Dia</Period>
-                  <Price>R$ 580</Price>
+                  <Period>{car.rent.period}</Period>
+                  <Price>R$ {car.rent.price}</Price>
                </Rent>
             </Details>
-            <Acessories>
-               <Acessory name="380Km/h" icon={SpeedSvg}/>
-               <Acessory name="3.2s" icon={AccelerationSvg}/>
-               <Acessory name="800 hp" icon={ForceSvg}/>
-               <Acessory name="Gasolina" icon={GasolineSvg}/>
-               <Acessory name="Auto" icon={ExChangeSvg}/>
-               <Acessory name="2 pessoas" icon={PeopleSvg}/>
-            </Acessories>
+            <Accessories>
 
-            <About>
-               Este é automóvel desportivo. Surgiu do
-               lendário touro de lide indultado na praça Real Maestranza de Sevilla.
-               É um belíssimo carro para quem gosta de acelerar.
-            </About>
+               {
+                  car.accessories.map(accessory => (
+                     <Accessory
+                        key={accessory.type}
+                        name={accessory.name}
+                        icon={getAccessoryIcon(accessory.type)}
+                     />
+                  ))
+               }
+            </Accessories>
+
+            <About>{car.about}</About>
+            <About>{car.about}</About>
+            <About>{car.about}</About>
             
-         </Content>
+         </AnimatedContent>
 
          <Footer>
             <Button title='Escolher período do aluguel' onPress={handleScheduling}/>

@@ -2,8 +2,9 @@ import React from 'react';
 import { RectButtonProps } from 'react-native-gesture-handler';
 //import { RectButtonProps } from 'react-native-gesture-handler';
 
-//import { getAccessoryIcon } from '../../utils/getAccessoryIcon';
+import { getAccessoryIcon } from '../../utils/getAccessoryIcons';
 //import { Car as ModelCar } from '../../database/model/Car';
+import { CarDTO } from '../../dtos/CarDTO';
 
 import {
   Container,
@@ -22,21 +23,15 @@ interface RentProps {
   price: number;
   period: string;
 }
-export interface CarDataProps {
-  brand: string;
-  name: string;
-  rent:RentProps
-  thumbnail: string;
-}
 
 export interface Props extends RectButtonProps{
-  data: CarDataProps;
+  data: CarDTO;
 }
 
 
 export function CarCard({ data, ...rest } : Props){
-  //const MotorIcon = getAccessoryIcon(data.fuel_type);
-
+  const MotorIcon = getAccessoryIcon(data.fuel_type);
+  console.log(data)
   return (
     <Container {...rest}>
       <Details>
@@ -50,7 +45,7 @@ export function CarCard({ data, ...rest } : Props){
           </Rent>
 
           <Type>
-            
+            <MotorIcon/>
           </Type>
         </About>
       </Details>
